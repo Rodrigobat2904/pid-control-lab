@@ -24,7 +24,9 @@
       display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
       background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px 20px;
     }
-    .badge { background: #7f1d1d; color: #fecaca; padding: 4px 10px; border-radius: 9999px; font-size: 0.75rem; font-weight: bold; }
+    .badge { padding: 4px 10px; border-radius: 9999px; font-size: 0.75rem; font-weight: bold; transition: all 0.3s; }
+    .badge-warn { background: #7f1d1d; color: #fecaca; }
+    .badge-ok { background: #065f46; color: #a7f3d0; }
     h1 { font-size: 1.3rem; font-weight: 700; color: #fff; margin-top: 4px; }
     .subtitle { font-size: 0.85rem; color: var(--text-muted); }
 
@@ -71,11 +73,12 @@
 
     /* Pulse alarm for unstable */
     .alarm-blink {
-      animation: blink 0.8s infinite alternate;
+      animation: blink 0.7s infinite alternate;
+      color: #f87171 !important;
     }
     @keyframes blink {
-      0% { color: #f87171; text-shadow: 0 0 12px rgba(248, 113, 113, 0.8); }
-      100% { color: #fca5a5; text-shadow: none; }
+      0% { opacity: 1.0; text-shadow: 0 0 10px rgba(248, 113, 113, 0.9); }
+      100% { opacity: 0.35; text-shadow: none; }
     }
 
     /* Gauge and motor visuals */
@@ -125,7 +128,7 @@
 
   <header>
     <div>
-      <span class="badge" id="header-badge">⚠️ HARMONIC VIBRATION DETECTED</span>
+      <span class="badge badge-warn" id="header-badge">⚠️ HARMONIC VIBRATION DETECTED</span>
       <h1>VFD Motor Drive & Closed-Loop PID Control Workbench</h1>
       <p class="subtitle">Interactive Real-time Engineering Test-bench: Diagnose instability and tune closed-loop parameters.</p>
     </div>
@@ -138,8 +141,8 @@
   <!-- Interactive Mission Banner -->
   <div class="mission-banner" id="mission-box">
     <div class="mission-text">
-      <strong>🎯 Misi Tuning:</strong> Kondisi awal motor disengaja <strong>berosilasi liar (bergelombang tak terkendali)</strong> akibat gain <em>Kp</em> terlalu agresif dan redaman <em>Kd</em> minim.
-      <br/><span class="mission-target">Tugas Lu:</span> Geser knop <strong>Kp</strong> (turunkan ke ~0.08) dan naikkan <strong>Kd</strong> (ke ~0.002) sampai kurva biru terkunci lurus dan lampu berubah hijau!
+      <strong>🎯 Misi Tuning:</strong> Kondisi awal motor sengaja dibuat <strong>berosilasi (naik-turun bergelombang)</strong> akibat respon terlalu agresif & keterlambatan fasa driver.
+      <br/><span class="mission-target">Tugas Lu:</span> Geser knop <strong>Kp</strong> (turunkan ke ~0.060) dan naikkan <strong>Kd</strong> (ke ~0.0035) sampai kurva biru terkunci lurus stabil!
     </div>
     <button class="btn-success" onclick="applyPreset('optimal')">✨ Terapkan Solusi Tuning Cepat</button>
   </div>
@@ -193,9 +196,9 @@
         <div style="font-size: 0.85rem; line-height: 1.5; color: #cbd5e1; background: #0f172a; padding: 12px 16px; border-radius: 8px; border: 1px solid #1e293b;">
           <strong style="color: #fff;">🔬 Panduan Mengatasi Osilasi:</strong>
           <ul style="margin-left: 18px; margin-top: 6px; font-size: 0.8rem; color: var(--text-muted);">
-            <li><strong>Langkah 1:</strong> Tarik slider <strong>Proportional Gain (Kp)</strong> ke kiri (turunkan dari 0.250 ke angka sekitar <strong>0.080</strong>). Amati bagaimana tinggi gelombang mulai menyusut!</li>
-            <li><strong>Langkah 2:</strong> Geser <strong>Derivative Gain (Kd)</strong> ke kanan (ke sekitar <strong>0.0020</strong>). Ini memberikan pengereman diferensial agar motor tidak kebablasan.</li>
-            <li><strong>Langkah 3:</strong> Saat kurva biru terkunci lurus nempel garis merah, indikator stabilitas bakal berubah jadi <strong>STABLE (TUNING SUKSES)</strong>.</li>
+            <li><strong>Langkah 1:</strong> Tarik slider <strong>Proportional Gain (Kp)</strong> ke kiri (turunkan dari 0.220 ke angka sekitar <strong>0.060</strong>). Amati tinggi gelombangnya langsung menyusut!</li>
+            <li><strong>Langkah 2:</strong> Geser <strong>Derivative Gain (Kd)</strong> ke kanan (ke sekitar <strong>0.0035</strong>). Ini memberikan gaya rem redaman agar gelombang mati.</li>
+            <li><strong>Langkah 3:</strong> Saat kurva biru terkunci lurus menempel garis merah, indikator stabilitas berubah jadi <strong>STABLE (TUNING SUKSES)</strong>.</li>
           </ul>
         </div>
       </div>
@@ -214,36 +217,36 @@
           <span>Target Velocity (Setpoint)</span>
           <span class="control-val" id="disp-sp">1400 RPM</span>
         </div>
-        <input type="range" id="sl-sp" min="0" max="2500" step="50" value="1400" />
+        <input type="range" id="sl-sp" min="200" max="2400" step="50" value="1400" />
       </div>
 
       <hr style="border: 0; border-top: 1px solid #1e293b;" />
 
-      <!-- Kp Slider (starts high at 0.250) -->
+      <!-- Kp Slider (starts aggressive at 0.220) -->
       <div class="control-group">
         <div class="control-header">
           <span>Proportional Gain (Kp)</span>
-          <span class="control-val" id="disp-kp" style="color: var(--red);">0.250</span>
+          <span class="control-val" id="disp-kp" style="color: var(--red);">0.220</span>
         </div>
-        <input type="range" id="sl-kp" min="0.005" max="0.300" step="0.005" value="0.250" />
+        <input type="range" id="sl-kp" min="0.010" max="0.300" step="0.005" value="0.220" />
       </div>
 
-      <!-- Ki Slider (starts high at 1.80) -->
+      <!-- Ki Slider (starts at 1.40) -->
       <div class="control-group">
         <div class="control-header">
           <span>Integral Gain (Ki)</span>
-          <span class="control-val" id="disp-ki">1.800</span>
+          <span class="control-val" id="disp-ki">1.400</span>
         </div>
-        <input type="range" id="sl-ki" min="0.0" max="3.0" step="0.05" value="1.80" />
+        <input type="range" id="sl-ki" min="0.0" max="3.0" step="0.05" value="1.40" />
       </div>
 
-      <!-- Kd Slider (starts at 0.0001 - practically no damping) -->
+      <!-- Kd Slider (starts at 0.0001 - zero damping) -->
       <div class="control-group">
         <div class="control-header">
           <span>Derivative Gain (Kd)</span>
           <span class="control-val" id="disp-kd">0.0001</span>
         </div>
-        <input type="range" id="sl-kd" min="0.0" max="0.015" step="0.0005" value="0.0001" />
+        <input type="range" id="sl-kd" min="0.0" max="0.010" step="0.0002" value="0.0001" />
       </div>
 
       <hr style="border: 0; border-top: 1px solid #1e293b;" />
@@ -285,13 +288,18 @@
     const dt = 0.002; // 2 ms simulation step
     let setpoint = 1400.0;
     
-    // DEFAULT STATE IS HEAVILY OSCILLATING!
-    let kp = 0.250;
-    let ki = 1.800;
-    let kd = 0.0001; // Tiny damping causes continuous wild oscillation!
+    // DEFAULT UNSTABLE OSCILLATION STATE
+    let kp = 0.220;
+    let ki = 1.400;
+    let kd = 0.0001; // Tiny damping causes continuous wild oscillation with 35ms driver latency
     let antiWindup = true;
     let derivFilter = true;
     let loadTorque = 0.0;
+
+    // VFD Transport & Inverter Switching Delay (35 ms = 17 steps)
+    const DELAY_STEPS = 17;
+    const vfdDelayBuffer = new Float32Array(DELAY_STEPS).fill(0);
+    let delayHead = 0;
 
     // Motor Parameters (2nd-order DC motor)
     const R = 2.0;       // Ohms
@@ -332,7 +340,7 @@
     window.addEventListener('resize', resizeCanvases);
     resizeCanvases();
 
-    // Discrete simulation step
+    // Discrete simulation step with physical transport lag
     function stepSimulation() {
       // 1. PID Algorithm
       const error = setpoint - rpm;
@@ -340,14 +348,14 @@
 
       let d_raw = -(rpm - prev_rpm) / dt;
       if (derivFilter) {
-        filtered_d = 0.2 * d_raw + 0.8 * filtered_d;
+        filtered_d = 0.25 * d_raw + 0.75 * filtered_d;
       } else {
         filtered_d = d_raw;
       }
       const d_term = kd * filtered_d;
       prev_rpm = rpm;
 
-      // Anti-windup clamping
+      // Anti-windup conditional integration
       const tentative = p_term + (ki * (integral + error * dt)) + d_term;
       if (!antiWindup) {
         integral += error * dt;
@@ -362,10 +370,16 @@
       }
       const i_term = ki * integral;
 
-      output_v = Math.max(0.0, Math.min(V_MAX, p_term + i_term + d_term));
+      const v_cmd = Math.max(0.0, Math.min(V_MAX, p_term + i_term + d_term));
+      output_v = v_cmd;
+
+      // Feed into VFD transport delay ring-buffer
+      const effective_v = vfdDelayBuffer[delayHead];
+      vfdDelayBuffer[delayHead] = v_cmd;
+      delayHead = (delayHead + 1) % DELAY_STEPS;
 
       // 2. DC Motor Dynamic Equations
-      const di_dt = (output_v - (R * current_amp) - (Ke * omega_rad)) / L;
+      const di_dt = (effective_v - (R * current_amp) - (Ke * omega_rad)) / L;
       const domega_dt = ((Kt * current_amp) - (B * omega_rad) - loadTorque) / J;
 
       current_amp += di_dt * dt;
@@ -510,9 +524,9 @@
       document.getElementById('val-err').innerHTML = `${Math.round(err)} <span class="tele-unit">RPM</span>`;
       document.getElementById('val-u').innerHTML = `${output_v.toFixed(1)} <span class="tele-unit">V</span>`;
 
-      // Calculate recent ripple (last 100 samples)
+      // Calculate recent ripple in last 120 samples
       let minRecent = 99999, maxRecent = -99999;
-      for (let i = BUFFER_SIZE - 100; i < BUFFER_SIZE; i++) {
+      for (let i = BUFFER_SIZE - 120; i < BUFFER_SIZE; i++) {
         if (bufPV[i] < minRecent) minRecent = bufPV[i];
         if (bufPV[i] > maxRecent) maxRecent = bufPV[i];
       }
@@ -521,23 +535,23 @@
       const stBox = document.getElementById('val-status');
       const badge = document.getElementById('header-badge');
 
-      if (ripple > 80.0) {
-        stBox.innerText = 'OSCILLATING!';
+      if (ripple > 45.0) {
+        stBox.innerText = `OSCILLATING (±${Math.round(ripple/2)} RPM)`;
         stBox.className = 'tele-val alarm-blink';
         badge.innerText = '⚠️ HARMONIC VIBRATION DETECTED';
-        badge.style.background = '#7f1d1d';
-        badge.style.color = '#fecaca';
-      } else if (Math.abs(err) < 30.0 && ripple < 25.0) {
+        badge.className = 'badge badge-warn';
+      } else if (Math.abs(err) < 30.0 && ripple < 20.0) {
         stBox.innerText = 'STABLE (TUNED!)';
         stBox.className = 'tele-val';
         stBox.style.color = '#4ade80';
         badge.innerText = '✅ SYSTEM STABILIZED (OPTIMAL)';
-        badge.style.background = '#065f46';
-        badge.style.color = '#a7f3d0';
+        badge.className = 'badge badge-ok';
       } else {
         stBox.innerText = 'CONVERGING...';
         stBox.className = 'tele-val';
         stBox.style.color = '#38bdf8';
+        badge.innerText = '🔄 CONVERGING';
+        badge.className = 'badge badge-warn';
       }
     }
 
@@ -550,7 +564,7 @@
       kp = parseFloat(e.target.value);
       const disp = document.getElementById('disp-kp');
       disp.innerText = kp.toFixed(3);
-      disp.style.color = kp > 0.15 ? 'var(--red)' : 'var(--accent)';
+      disp.style.color = kp > 0.10 ? 'var(--red)' : 'var(--accent)';
     });
     document.getElementById('sl-ki').addEventListener('input', (e) => {
       ki = parseFloat(e.target.value);
@@ -584,13 +598,13 @@
     // Presets
     function applyPreset(name) {
       if (name === 'optimal') {
-        setGains(0.08, 0.85, 0.002, true);
+        setGains(0.060, 0.50, 0.0035, true);
       } else if (name === 'oscillate') {
-        setGains(0.25, 1.80, 0.0001, true);
+        setGains(0.220, 1.40, 0.0001, true);
       } else if (name === 'sluggish') {
-        setGains(0.02, 0.15, 0.008, true);
+        setGains(0.020, 0.15, 0.0080, true);
       } else if (name === 'windup') {
-        setGains(0.12, 2.50, 0.0, false);
+        setGains(0.120, 2.50, 0.0000, false);
       }
     }
 
@@ -601,7 +615,7 @@
       document.getElementById('sl-kd').value = kd;
       const dispKp = document.getElementById('disp-kp');
       dispKp.innerText = kp.toFixed(3);
-      dispKp.style.color = kp > 0.15 ? 'var(--red)' : 'var(--accent)';
+      dispKp.style.color = kp > 0.10 ? 'var(--red)' : 'var(--accent)';
       document.getElementById('disp-ki').innerText = ki.toFixed(3);
       document.getElementById('disp-kd').innerText = kd.toFixed(4);
       document.getElementById('toggle-aw').classList.toggle('on', antiWindup);
