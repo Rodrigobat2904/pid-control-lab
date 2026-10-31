@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PID Control Lab — Interactive Digital Twin & VFD Simulator</title>
+  <title>PID Control Lab — Interactive Tuning Challenge</title>
   <style>
     :root {
       --bg: #0b0f19;
@@ -18,15 +18,24 @@
       --text-muted: #9ca3af;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace; }
-    body { background: var(--bg); color: var(--text); padding: 18px; min-height: 100vh; display: flex; flex-direction: column; gap: 16px; }
+    body { background: var(--bg); color: var(--text); padding: 18px; min-height: 100vh; display: flex; flex-direction: column; gap: 14px; }
     
     header {
       display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
       background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px 20px;
     }
-    .badge { background: #065f46; color: #a7f3d0; padding: 4px 10px; border-radius: 9999px; font-size: 0.75rem; font-weight: bold; }
+    .badge { background: #7f1d1d; color: #fecaca; padding: 4px 10px; border-radius: 9999px; font-size: 0.75rem; font-weight: bold; }
     h1 { font-size: 1.3rem; font-weight: 700; color: #fff; margin-top: 4px; }
     .subtitle { font-size: 0.85rem; color: var(--text-muted); }
+
+    /* Mission Challenge Banner */
+    .mission-banner {
+      background: linear-gradient(90deg, #1e1b4b 0%, #0f172a 100%);
+      border: 1px solid #4338ca; border-radius: 10px; padding: 12px 18px;
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;
+    }
+    .mission-text { font-size: 0.86rem; line-height: 1.4; color: #e2e8f0; }
+    .mission-target { color: var(--yellow); font-weight: bold; }
 
     .main-grid {
       display: grid; grid-template-columns: 1fr 340px; gap: 16px; flex: 1;
@@ -60,6 +69,15 @@
     .tele-val { font-size: 1.35rem; font-weight: 700; color: #fff; margin-top: 3px; font-family: monospace; }
     .tele-unit { font-size: 0.75rem; color: var(--text-muted); font-weight: normal; }
 
+    /* Pulse alarm for unstable */
+    .alarm-blink {
+      animation: blink 0.8s infinite alternate;
+    }
+    @keyframes blink {
+      0% { color: #f87171; text-shadow: 0 0 12px rgba(248, 113, 113, 0.8); }
+      100% { color: #fca5a5; text-shadow: none; }
+    }
+
     /* Gauge and motor visuals */
     .visual-row { display: grid; grid-template-columns: 160px 1fr; gap: 16px; align-items: center; }
     .gauge-wrapper { width: 160px; height: 160px; margin: 0 auto; }
@@ -87,7 +105,8 @@
     button:hover { background: #334155; border-color: var(--accent); }
     button.btn-warn { background: #7f1d1d; border-color: #991b1b; color: #fecaca; }
     button.btn-warn:hover { background: #991b1b; }
-    button.active { background: #0369a1; border-color: #38bdf8; }
+    button.btn-success { background: #065f46; border-color: #059669; color: #a7f3d0; }
+    button.btn-success:hover { background: #047857; }
 
     .switch-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; padding: 6px 0; border-bottom: 1px solid #1e293b; }
     .toggle {
@@ -106,15 +125,24 @@
 
   <header>
     <div>
-      <span class="badge">LIVE DIGITAL TWIN HARDWARE SIMULATOR</span>
+      <span class="badge" id="header-badge">⚠️ HARMONIC VIBRATION DETECTED</span>
       <h1>VFD Motor Drive & Closed-Loop PID Control Workbench</h1>
-      <p class="subtitle">Interactively tune PID gains, throttle setpoints, and inject physical mechanical disturbances in real-time.</p>
+      <p class="subtitle">Interactive Real-time Engineering Test-bench: Diagnose instability and tune closed-loop parameters.</p>
     </div>
     <div style="text-align: right;">
       <span style="font-size: 0.75rem; color: #64748b;">Repository</span><br/>
       <a href="https://github.com/Rodrigobat2904/pid-control-lab" target="_blank" style="color: var(--accent); text-decoration: none; font-size: 0.85rem; font-weight: bold;">github.com/Rodrigobat2904/pid-control-lab ↗</a>
     </div>
   </header>
+
+  <!-- Interactive Mission Banner -->
+  <div class="mission-banner" id="mission-box">
+    <div class="mission-text">
+      <strong>🎯 Misi Tuning:</strong> Kondisi awal motor disengaja <strong>berosilasi liar (bergelombang tak terkendali)</strong> akibat gain <em>Kp</em> terlalu agresif dan redaman <em>Kd</em> minim.
+      <br/><span class="mission-target">Tugas Lu:</span> Geser knop <strong>Kp</strong> (turunkan ke ~0.08) dan naikkan <strong>Kd</strong> (ke ~0.002) sampai kurva biru terkunci lurus dan lampu berubah hijau!
+    </div>
+    <button class="btn-success" onclick="applyPreset('optimal')">✨ Terapkan Solusi Tuning Cepat</button>
+  </div>
 
   <div class="main-grid">
     <!-- LEFT: Oscilloscope + Telemetry -->
@@ -141,7 +169,7 @@
         </div>
         <div class="tele-box">
           <div class="tele-label">Target Setpoint</div>
-          <div class="tele-val" id="val-sp" style="color: var(--red);">1200 <span class="tele-unit">RPM</span></div>
+          <div class="tele-val" id="val-sp" style="color: var(--red);">1400 <span class="tele-unit">RPM</span></div>
         </div>
         <div class="tele-box">
           <div class="tele-label">Tracking Error</div>
@@ -152,8 +180,8 @@
           <div class="tele-val" id="val-u" style="color: var(--green);">0.0 <span class="tele-unit">V</span></div>
         </div>
         <div class="tele-box">
-          <div class="tele-label">Transient Status</div>
-          <div class="tele-val" id="val-status" style="font-size: 0.95rem; color: var(--yellow); padding-top: 5px;">Starting...</div>
+          <div class="tele-label">Stability Verdict</div>
+          <div class="tele-val alarm-blink" id="val-status" style="font-size: 0.88rem; padding-top: 5px;">OSCILLATING!</div>
         </div>
       </div>
 
@@ -163,11 +191,11 @@
           <canvas id="gauge"></canvas>
         </div>
         <div style="font-size: 0.85rem; line-height: 1.5; color: #cbd5e1; background: #0f172a; padding: 12px 16px; border-radius: 8px; border: 1px solid #1e293b;">
-          <strong style="color: #fff;">💡 Cara Bermain / Test Respons Kontrol:</strong>
+          <strong style="color: #fff;">🔬 Panduan Mengatasi Osilasi:</strong>
           <ul style="margin-left: 18px; margin-top: 6px; font-size: 0.8rem; color: var(--text-muted);">
-            <li>Geser <strong>Target RPM Slider</strong> ke kanan/kiri untuk melihat respon motor mengejar kecepatan baru secara instan.</li>
-            <li>Klik tombol <strong>"🚨 Suntik Beban Torsi (Load Disturbance)"</strong> untuk mensimulasikan rem mekanis / beban mendadak dan amati bagaimana integral loop mengoreksi kecepatan kembali stabil!</li>
-            <li>Coba pilih preset <strong>"Osilasi Liar"</strong> untuk melihat apa yang terjadi jika gain $K_p$ terlalu agresif.</li>
+            <li><strong>Langkah 1:</strong> Tarik slider <strong>Proportional Gain (Kp)</strong> ke kiri (turunkan dari 0.250 ke angka sekitar <strong>0.080</strong>). Amati bagaimana tinggi gelombang mulai menyusut!</li>
+            <li><strong>Langkah 2:</strong> Geser <strong>Derivative Gain (Kd)</strong> ke kanan (ke sekitar <strong>0.0020</strong>). Ini memberikan pengereman diferensial agar motor tidak kebablasan.</li>
+            <li><strong>Langkah 3:</strong> Saat kurva biru terkunci lurus nempel garis merah, indikator stabilitas bakal berubah jadi <strong>STABLE (TUNING SUKSES)</strong>.</li>
           </ul>
         </div>
       </div>
@@ -177,45 +205,45 @@
     <div class="card controls">
       <div class="card-title">
         <span>VFD & PID Tuning Knobs</span>
-        <button onclick="resetAll()" style="padding: 4px 8px; font-size: 0.72rem;">Reset Default</button>
+        <button onclick="applyPreset('oscillate')" style="padding: 4px 8px; font-size: 0.72rem; color: var(--red);">Kembali Osilasi</button>
       </div>
 
       <!-- Setpoint Slider -->
       <div class="control-group">
         <div class="control-header">
           <span>Target Velocity (Setpoint)</span>
-          <span class="control-val" id="disp-sp">1200 RPM</span>
+          <span class="control-val" id="disp-sp">1400 RPM</span>
         </div>
-        <input type="range" id="sl-sp" min="0" max="2500" step="50" value="1200" />
+        <input type="range" id="sl-sp" min="0" max="2500" step="50" value="1400" />
       </div>
 
       <hr style="border: 0; border-top: 1px solid #1e293b;" />
 
-      <!-- Kp Slider -->
+      <!-- Kp Slider (starts high at 0.250) -->
       <div class="control-group">
         <div class="control-header">
           <span>Proportional Gain (Kp)</span>
-          <span class="control-val" id="disp-kp">0.080</span>
+          <span class="control-val" id="disp-kp" style="color: var(--red);">0.250</span>
         </div>
-        <input type="range" id="sl-kp" min="0.005" max="0.300" step="0.005" value="0.08" />
+        <input type="range" id="sl-kp" min="0.005" max="0.300" step="0.005" value="0.250" />
       </div>
 
-      <!-- Ki Slider -->
+      <!-- Ki Slider (starts high at 1.80) -->
       <div class="control-group">
         <div class="control-header">
           <span>Integral Gain (Ki)</span>
-          <span class="control-val" id="disp-ki">0.850</span>
+          <span class="control-val" id="disp-ki">1.800</span>
         </div>
-        <input type="range" id="sl-ki" min="0.0" max="3.0" step="0.05" value="0.85" />
+        <input type="range" id="sl-ki" min="0.0" max="3.0" step="0.05" value="1.80" />
       </div>
 
-      <!-- Kd Slider -->
+      <!-- Kd Slider (starts at 0.0001 - practically no damping) -->
       <div class="control-group">
         <div class="control-header">
           <span>Derivative Gain (Kd)</span>
-          <span class="control-val" id="disp-kd">0.0020</span>
+          <span class="control-val" id="disp-kd">0.0001</span>
         </div>
-        <input type="range" id="sl-kd" min="0.0" max="0.015" step="0.0005" value="0.002" />
+        <input type="range" id="sl-kd" min="0.0" max="0.015" step="0.0005" value="0.0001" />
       </div>
 
       <hr style="border: 0; border-top: 1px solid #1e293b;" />
@@ -242,12 +270,12 @@
       </button>
 
       <!-- Presets -->
-      <div style="font-size: 0.78rem; font-weight: bold; color: var(--text-muted); margin-top: 4px;">Tuning Presets:</div>
+      <div style="font-size: 0.78rem; font-weight: bold; color: var(--text-muted); margin-top: 4px;">Skenario Tuning Cepat:</div>
       <div class="btn-grid">
-        <button onclick="applyPreset('optimal')">✨ Optimal Damped</button>
-        <button onclick="applyPreset('oscillate')">⚡ Osilasi Liar (High Kp)</button>
-        <button onclick="applyPreset('sluggish')">🐢 Lambat (Low Kp/Ki)</button>
-        <button onclick="applyPreset('windup')">💥 Windup Crash (No Clamp)</button>
+        <button class="btn-warn" onclick="applyPreset('oscillate')">⚡ Reset Osilasi Liar</button>
+        <button class="btn-success" onclick="applyPreset('optimal')">✨ Solusi Stabil</button>
+        <button onclick="applyPreset('sluggish')">🐢 Mode Lambat</button>
+        <button onclick="applyPreset('windup')">💥 Tanpa Anti-Windup</button>
       </div>
     </div>
   </div>
@@ -255,8 +283,12 @@
   <script>
     // Physics and Model State
     const dt = 0.002; // 2 ms simulation step
-    let setpoint = 1200.0;
-    let kp = 0.08, ki = 0.85, kd = 0.002;
+    let setpoint = 1400.0;
+    
+    // DEFAULT STATE IS HEAVILY OSCILLATING!
+    let kp = 0.250;
+    let ki = 1.800;
+    let kd = 0.0001; // Tiny damping causes continuous wild oscillation!
     let antiWindup = true;
     let derivFilter = true;
     let loadTorque = 0.0;
@@ -279,9 +311,9 @@
     let filtered_d = 0.0;
     let output_v = 0.0;
 
-    // Telemetry Buffer for Scope (300 points)
+    // Telemetry Buffer for Scope (320 points)
     const BUFFER_SIZE = 320;
-    const bufSP = new Float32Array(BUFFER_SIZE).fill(1200);
+    const bufSP = new Float32Array(BUFFER_SIZE).fill(1400);
     const bufPV = new Float32Array(BUFFER_SIZE).fill(0);
     const bufU = new Float32Array(BUFFER_SIZE).fill(0);
 
@@ -342,9 +374,7 @@
     }
 
     // Animation & Render Loop
-    let lastRender = 0;
-    function loop(timestamp) {
-      // Run 6 physics substeps per animation frame for numerical stability
+    function loop() {
       for (let i = 0; i < 6; i++) {
         stepSimulation();
       }
@@ -402,7 +432,6 @@
       ctxScope.lineWidth = 1.5 * window.devicePixelRatio;
       ctxScope.beginPath();
       for (let i = 0; i < BUFFER_SIZE; i++) {
-        // Map 0-24V to bottom quarter of screen
         const y = h - (bufU[i] / V_MAX) * (h * 0.35) - 10;
         const x = toX(i);
         if (i === 0) ctxScope.moveTo(x, y); else ctxScope.lineTo(x, y);
@@ -432,7 +461,6 @@
       const cx = w / 2, cy = h / 2 + 10;
       const radius = Math.min(w, h) * 0.38;
 
-      // Gauge background arc (-140 deg to +40 deg)
       const startAngle = Math.PI * 0.75;
       const endAngle = Math.PI * 2.25;
 
@@ -442,7 +470,6 @@
       ctxGauge.arc(cx, cy, radius, startAngle, endAngle);
       ctxGauge.stroke();
 
-      // Active fill arc
       const frac = Math.min(1.0, rpm / 2500.0);
       const currentAngle = startAngle + frac * (endAngle - startAngle);
       ctxGauge.strokeStyle = '#38bdf8';
@@ -450,7 +477,6 @@
       ctxGauge.arc(cx, cy, radius, startAngle, currentAngle);
       ctxGauge.stroke();
 
-      // Needle
       ctxGauge.save();
       ctxGauge.translate(cx, cy);
       ctxGauge.rotate(currentAngle);
@@ -462,13 +488,11 @@
       ctxGauge.fill();
       ctxGauge.restore();
 
-      // Center Pin
       ctxGauge.fillStyle = '#f3f4f6';
       ctxGauge.beginPath();
       ctxGauge.arc(cx, cy, 5 * window.devicePixelRatio, 0, Math.PI * 2);
       ctxGauge.fill();
 
-      // Digital RPM inside gauge
       ctxGauge.fillStyle = '#9ca3af';
       ctxGauge.font = `${11 * window.devicePixelRatio}px monospace`;
       ctxGauge.textAlign = 'center';
@@ -478,7 +502,7 @@
       ctxGauge.fillText(`${Math.round(rpm)} RPM`, cx, cy + 44 * window.devicePixelRatio);
     }
 
-    // Update Telemetry Numbers
+    // Update Telemetry Numbers & Calculate Oscillation Ripple
     function updateTelemetry() {
       document.getElementById('val-pv').innerHTML = `${Math.round(rpm)} <span class="tele-unit">RPM</span>`;
       document.getElementById('val-sp').innerHTML = `${Math.round(setpoint)} <span class="tele-unit">RPM</span>`;
@@ -486,16 +510,34 @@
       document.getElementById('val-err').innerHTML = `${Math.round(err)} <span class="tele-unit">RPM</span>`;
       document.getElementById('val-u').innerHTML = `${output_v.toFixed(1)} <span class="tele-unit">V</span>`;
 
+      // Calculate recent ripple (last 100 samples)
+      let minRecent = 99999, maxRecent = -99999;
+      for (let i = BUFFER_SIZE - 100; i < BUFFER_SIZE; i++) {
+        if (bufPV[i] < minRecent) minRecent = bufPV[i];
+        if (bufPV[i] > maxRecent) maxRecent = bufPV[i];
+      }
+      const ripple = maxRecent - minRecent;
+
       const stBox = document.getElementById('val-status');
-      if (Math.abs(err) < 25.0) {
-        stBox.innerText = 'STABLE (LOCK)';
+      const badge = document.getElementById('header-badge');
+
+      if (ripple > 80.0) {
+        stBox.innerText = 'OSCILLATING!';
+        stBox.className = 'tele-val alarm-blink';
+        badge.innerText = '⚠️ HARMONIC VIBRATION DETECTED';
+        badge.style.background = '#7f1d1d';
+        badge.style.color = '#fecaca';
+      } else if (Math.abs(err) < 30.0 && ripple < 25.0) {
+        stBox.innerText = 'STABLE (TUNED!)';
+        stBox.className = 'tele-val';
         stBox.style.color = '#4ade80';
-      } else if (err > 0) {
-        stBox.innerText = 'ACCELERATING';
-        stBox.style.color = '#38bdf8';
+        badge.innerText = '✅ SYSTEM STABILIZED (OPTIMAL)';
+        badge.style.background = '#065f46';
+        badge.style.color = '#a7f3d0';
       } else {
-        stBox.innerText = 'BRAKING / OVERSHOOT';
-        stBox.style.color = '#fbbf24';
+        stBox.innerText = 'CONVERGING...';
+        stBox.className = 'tele-val';
+        stBox.style.color = '#38bdf8';
       }
     }
 
@@ -506,7 +548,9 @@
     });
     document.getElementById('sl-kp').addEventListener('input', (e) => {
       kp = parseFloat(e.target.value);
-      document.getElementById('disp-kp').innerText = kp.toFixed(3);
+      const disp = document.getElementById('disp-kp');
+      disp.innerText = kp.toFixed(3);
+      disp.style.color = kp > 0.15 ? 'var(--red)' : 'var(--accent)';
     });
     document.getElementById('sl-ki').addEventListener('input', (e) => {
       ki = parseFloat(e.target.value);
@@ -529,7 +573,7 @@
 
     // Load disturbance injection
     function startLoad() {
-      loadTorque = 0.015; // N.m mechanical friction brake
+      loadTorque = 0.015;
       document.getElementById('btn-load').innerText = '⚠️ BEBAN AKTIF MENAHAN MOTOR!';
     }
     function stopLoad() {
@@ -542,11 +586,11 @@
       if (name === 'optimal') {
         setGains(0.08, 0.85, 0.002, true);
       } else if (name === 'oscillate') {
-        setGains(0.28, 1.8, 0.0002, true);
+        setGains(0.25, 1.80, 0.0001, true);
       } else if (name === 'sluggish') {
         setGains(0.02, 0.15, 0.008, true);
       } else if (name === 'windup') {
-        setGains(0.12, 2.5, 0.0, false);
+        setGains(0.12, 2.50, 0.0, false);
       }
     }
 
@@ -555,21 +599,12 @@
       document.getElementById('sl-kp').value = kp;
       document.getElementById('sl-ki').value = ki;
       document.getElementById('sl-kd').value = kd;
-      document.getElementById('disp-kp').innerText = kp.toFixed(3);
+      const dispKp = document.getElementById('disp-kp');
+      dispKp.innerText = kp.toFixed(3);
+      dispKp.style.color = kp > 0.15 ? 'var(--red)' : 'var(--accent)';
       document.getElementById('disp-ki').innerText = ki.toFixed(3);
       document.getElementById('disp-kd').innerText = kd.toFixed(4);
       document.getElementById('toggle-aw').classList.toggle('on', antiWindup);
-    }
-
-    function resetAll() {
-      applyPreset('optimal');
-      setpoint = 1200;
-      document.getElementById('sl-sp').value = 1200;
-      document.getElementById('disp-sp').innerText = '1200 RPM';
-      integral = 0;
-      rpm = 0;
-      omega_rad = 0;
-      current_amp = 0;
     }
   </script>
 </body>
